@@ -1,0 +1,27 @@
+# secrets
+.env
+.env.local
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor / tooling
+.claude/
+.idea/
+.vscode/
+*.swp
+
+# project-local
+uploads/*
+!uploads/.gitkeep
+/tmp/
