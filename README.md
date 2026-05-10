@@ -142,7 +142,6 @@ livetutor-ai/
 ├── .env / .env.example      API key + tunables (.env never committed)
 ├── LICENSE                  MIT
 ├── README.md
-├── THIRD_PARTY_LICENSES.md  attribution for runtime dependencies
 ├── requirements.txt
 ├── run.py                   uvicorn entry point
 ├── app/
@@ -178,8 +177,6 @@ livetutor-ai/
 ## License
 
 This project is released under the [MIT License](LICENSE) — see `LICENSE` for the full text.
-
-Third-party libraries used at runtime are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) along with their respective licenses. Most are MIT/BSD/Apache-2.0; `edge-tts` is LGPL-3.0 (compatible with permissive licenses since the project consumes it as a library, not as a derivative).
 
 ---
 
