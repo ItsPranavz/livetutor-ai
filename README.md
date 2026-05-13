@@ -1,57 +1,22 @@
 # LiveTutor AI
 
-A real-time, browser-based AI tutor with a 3D talking avatar. The tutor speaks, lip-syncs to its actual voice, gestures while talking, and listens to you with your microphone — all powered by a streaming language model on OpenRouter and a local Whisper backbone for speech understanding.
+A real-time, browser-based AI tutor with a 3D talking avatar. The tutor speaks, lip-syncs to its actual voice, gestures while talking, and listens to you with your microphone, all powered by a streaming language model on OpenRouter and a local Whisper backbone for speech understanding.
 
-> Designed to run for **well under $1** for a full evaluation. The default model is fast and cheap; voice + speech recognition run locally so the only paid surface is the LLM call itself.
-
----
-
-## Highlights
-
-- **3D talking avatar** — Three.js + Ready Player Me-style models via [TalkingHead.js](https://github.com/met4citizen/TalkingHead). Real visemes for lip-sync, hand gestures during speech, expression cues at end of sentences. Pick from a built-in male or female teacher, or paste your own custom Ready Player Me URL.
-- **Word-accurate lip-sync** — every TTS sentence is run through `faster-whisper` server-side to extract real per-word start/end timings; the avatar's visemes fire on the actual phonemes, not on evenly-distributed estimates.
-- **Sub-200ms perceived latency** — when you hit send, a pre-cached filler ("Hmm, let me think.") starts playing in roughly 200ms while the LLM and the actual reply are still being generated. The conversation feels real-time even though the underlying round-trip is 2-3 seconds.
-- **Fast LLM** — defaults to `meta-llama/llama-3.3-70b-instruct` routed to **Groq** through OpenRouter (~200ms time-to-first-token). Cerebras / Sambanova fallback. Vision-capable models auto-routed when you attach an image.
-- **Local STT** — your microphone audio is captured with `MediaRecorder`, posted to a `faster-whisper` endpoint, and transcribed locally. Listens continuously with a 4-second silence auto-stop and a live VU meter. Far more accurate than browser `webkitSpeechRecognition`.
-- **Microsoft neural voices** — backend uses `edge-tts` for Andrew, Emma, Ava, Brian, Aria, Jenny, Sonia, Ryan, Natasha, etc. The voice picker is auto-filtered by the avatar's gender.
-- **Streaming responses** — tokens stream from OpenRouter into the caption bubble; sentences are spoken as they arrive.
-- **File attachments** — drop in images (sent to a vision-capable model), PDFs (text extracted), or text/code/markdown files.
-- **Polished UI** — unified composer shell, glass surfaces, refined typography, micro-interactions.
+> Designed to run for **well under $1** for a full evaluation. The default model is fast and cheap; voice and speech recognition run locally, so the only paid surface is the LLM call itself.
 
 ---
 
-## Architecture
+## Features
 
-```
-┌──────────────── Browser (free, local) ─────────────────┐    ┌─── OpenRouter ────┐
-│                                                        │    │                   │
-│  Three.js + TalkingHead.js                             │    │   chat model      │
-│   ├─ visemes from Whisper word timings                 │    │   (streaming)     │
-│   ├─ hand gestures (TalkingHead pose templates)        │    │                   │
-│   └─ expression / mood cues                            │    └────────┬──────────┘
-│                                                        │             │
-│  MediaRecorder → POST /api/stt   (faster-whisper)      │             │
-│  Web Audio AnalyserNode → live VU meter, silence stop  │             │
-│                                                        │             │
-│  Chat / captions / transcript / attachments            │             │
-│                                                        │             │
-└─────────────┬──────────────────────────────────────────┘             │
-              │                                                         │
-              ▼ POST /api/chat (SSE stream)                             │
-   ┌──────────────────────────────────┐                                 │
-   │  FastAPI backend                 │                                 │
-   │   ├─ /api/chat        (SSE)      │ ────────────────────────────────┘
-   │   ├─ /api/tts         (audio +   │
-   │   │   word-level Whisper align)  │
-   │   ├─ /api/stt         (Whisper)  │ ── faster-whisper (local CPU)
-   │   ├─ /api/filler      (cached)   │ ── edge-tts pre-rendered audio
-   │   ├─ /api/upload      (image/PDF)│
-   │   └─ serves static UI            │
-   └──────────────────────────────────┘
-```
-
-- **Backend** (`app/`): `main.py` (routes), `llm.py` (OpenRouter streaming + provider routing + sanitiser), `tts.py` (Edge TTS with retry + Whisper alignment + filler cache), `stt.py` (faster-whisper), `uploads.py` (PDF/text/image processing), `config.py` (model/voice/avatar registries).
-- **Frontend** (`static/js/`): `avatar.js` (TalkingHead controller, gesture scheduler, branding stripper), `speech.js` (TTS queue, MediaRecorder STT, sentence splitter, filler), `chat.js` (streaming chat client), `main.js` (DOM wiring, custom URL modal, VU meter).
+- **3D talking avatar.** Built with Three.js and Ready Player Me-style models via [TalkingHead.js](https://github.com/met4citizen/TalkingHead). The avatar's mouth moves in sync with what it says, it uses hand gestures, and it shows facial expressions at the end of sentences. Pick a built-in male or female teacher, or paste your own custom Ready Player Me URL.
+- **Accurate lip-sync.** Every spoken sentence is processed with `faster-whisper` on the server to get the timing of each word, so the mouth movements match the real sounds.
+- **Fast response time.** When you hit send, a short filler ("Hmm, let me think.") starts playing in about 200ms while the LLM is still generating the real reply. The conversation feels instant even though the full round-trip takes 2 to 3 seconds.
+- **Fast LLM.** Defaults to `meta-llama/llama-3.3-70b-instruct` routed to **Groq** through OpenRouter, with around 200ms time-to-first-token. Falls back to Cerebras or Sambanova. Switches to a vision model automatically when you attach an image.
+- **Local speech recognition.** Your voice is captured with `MediaRecorder`, sent to a local `faster-whisper` endpoint, and transcribed there. It listens continuously, stops after 4 seconds of silence, and shows a live VU meter. Much more accurate than the browser's built-in speech API.
+- **Microsoft neural voices.** The backend uses `edge-tts` for voices like Andrew, Emma, Ava, Brian, Aria, Jenny, Sonia, Ryan, and Natasha. The voice picker is filtered by the avatar's gender.
+- **Streaming responses.** Tokens stream from OpenRouter into the caption bubble, and sentences are spoken as they arrive.
+- **File attachments.** Drop in images (sent to a vision model), PDFs (text is extracted), or text, code, and markdown files.
+- **Polished UI.** Unified composer, glass surfaces, refined typography, and smooth micro-interactions.
 
 ---
 
@@ -60,7 +25,7 @@ A real-time, browser-based AI tutor with a 3D talking avatar. The tutor speaks, 
 ### Requirements
 - Python 3.11+ (tested on 3.14)
 - A modern browser. Chrome, Edge, or Safari recommended (we use `MediaRecorder` and Web Audio APIs)
-- An OpenRouter API key — get one at https://openrouter.ai/keys
+- An OpenRouter API key. Get one at https://openrouter.ai/keys
 - ffmpeg (for `faster-whisper` to decode browser audio). Install with `brew install ffmpeg` on macOS
 
 ### Setup
@@ -98,9 +63,9 @@ SITE_URL=http://localhost:8000
 python run.py
 ```
 
-Open **http://127.0.0.1:8000** in your browser. The first time you click the mic, the Whisper model (~150 MB for `base.en`) will download and load into memory — subsequent transcriptions take 200-600 ms.
+Open **http://127.0.0.1:8000** in your browser. The first time you click the mic, the Whisper model (about 150 MB for `base.en`) will download and load into memory. After that, transcriptions take 200 to 600 ms.
 
-Allow the microphone permission when your browser asks. Click the page once before sending the first message — browsers require a user gesture before audio playback.
+Allow the microphone permission when your browser asks. Click the page once before sending the first message; browsers require a user gesture before audio playback.
 
 ---
 
@@ -123,15 +88,15 @@ A typical 50-turn lesson on the default Llama 3.3 70B model costs less than $0.0
 
 Override via environment variables in `.env`:
 
-| Variable           | Default                                  | Notes                                       |
-|--------------------|------------------------------------------|---------------------------------------------|
-| `OPENROUTER_API_KEY` | (required)                             | Your key from openrouter.ai/keys            |
-| `DEFAULT_MODEL`    | `meta-llama/llama-3.3-70b-instruct`      | Any model in `app/config.py`'s `AVAILABLE_MODELS` |
-| `DEFAULT_VOICE`    | `en-US-AndrewNeural`                     | Any Microsoft Edge neural voice short-name  |
-| `WHISPER_MODEL`    | `base.en`                                | `tiny.en`, `base.en`, `small.en`, `medium.en` |
-| `WHISPER_DEVICE`   | `cpu`                                    | `cpu` or `cuda`                             |
-| `WHISPER_COMPUTE`  | `int8`                                   | `int8`, `int16`, `float16`, `float32`       |
-| `APP_PORT`         | `8000`                                   |                                             |
+| Variable             | Default                             | Meaning                                          |
+|----------------------|-------------------------------------|--------------------------------------------------|
+| `OPENROUTER_API_KEY` | (required)                          | Your API key from openrouter.ai/keys             |
+| `DEFAULT_MODEL`      | `meta-llama/llama-3.3-70b-instruct` | The default chat model                           |
+| `DEFAULT_VOICE`      | `en-US-AndrewNeural`                | The default Microsoft Edge neural voice          |
+| `WHISPER_MODEL`      | `base.en`                           | Whisper model size: tiny, base, small, medium    |
+| `WHISPER_DEVICE`     | `cpu`                               | Device to run Whisper on: cpu or cuda            |
+| `WHISPER_COMPUTE`    | `int8`                              | Whisper precision: int8, int16, float16, float32 |
+| `APP_PORT`           | `8000`                              | Port the app runs on                             |
 
 ---
 
@@ -165,29 +130,9 @@ livetutor-ai/
 
 ---
 
-## Caveats
-
-- **Avatar quality**: the two bundled tutors (Sara and David) come from the open-source TalkingHead.js repo and are stylised 3D, not photoreal. For a more realistic avatar, create one at [readyplayer.me/avatar](https://readyplayer.me/avatar) (free) and paste the `.glb` URL into the **Custom Ready Player Me URL…** option in the Tutor dropdown.
-- **Edge TTS gray area**: the `edge-tts` Python package calls Microsoft's public Edge browser TTS endpoint without an official API key. Microsoft has not blocked this and it's widely used, but for commercial use you should review Microsoft's ToS or switch to a TTS you have explicit rights to (Piper, Coqui, or a paid service).
-- **First TTS call is slower**: synthesising the first sentence triggers Whisper alignment on ~2 KB of audio (≈300 ms extra). Subsequent sentences are similar. The pre-cached filler is what makes it feel instant.
-- **Lip-sync** uses Whisper word timings combined with TalkingHead's Oculus viseme set. It looks reasonable for English; for cinema-quality you'd want a dedicated lip-sync model (SadTalker, Wav2Lip, Audio2Face).
-
----
-
 ## License
 
-This project is released under the [MIT License](LICENSE) — see `LICENSE` for the full text.
-
----
-
-## Acknowledgements
-
-- [TalkingHead.js](https://github.com/met4citizen/TalkingHead) by Mika Suominen — the 3D avatar engine and stock models
-- [Three.js](https://threejs.org/) — WebGL rendering
-- [edge-tts](https://github.com/rany2/edge-tts) by rany2 — access to Microsoft's neural voices
-- [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — speech-to-text + forced alignment
-- [FastAPI](https://fastapi.tiangolo.com/) — web framework
-- [OpenRouter](https://openrouter.ai/) — model routing
+This project is released under the [MIT License](LICENSE). See `LICENSE` for the full text.
 
 ---
 
